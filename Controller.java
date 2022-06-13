@@ -1,20 +1,45 @@
 package engine;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import java.util.LinkedList;
+import java.util.List;
 
 @RestController
 public class Controller {
-    @GetMapping("/api/quiz")
-    public Quiz getQ () {
-        return new Quiz("The Java Logo", "What is depicted on the Java logo?", new String[]{"Robot","Tea leaf","Cup of coffee","Bug"});
+    List<Quiz> ids = new LinkedList<>();
+    @GetMapping("/api/quizzes")
+    public List<Quiz> getQ () {
+        return ids;
     }
-    @PostMapping("api/quiz")
-    public Response postQ (@RequestParam int answer) {
-if (answer == 2) {
-    return new Response(true, "Congratulations, you're right!");
-} else return new Response(false, "Wrong answer! Please, try again.");
+    @GetMapping("/api/quizzes/{id}")
+    public Quiz getQById(@PathVariable int id) {
+        for (Quiz quiz : ids) {
+            if (quiz.getId() == id) return quiz;
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+    }
+
+    @PostMapping("/api/quizzes/{id}/solve")
+    public Response postQ (@RequestParam int answer, @PathVariable int id) {
+        for (Quiz quiz : ids) {
+            if (quiz.getId() == id) {
+                if (quiz.getAnswer() == answer) {
+                    return new Response(true, "Congratulations, you're right!");
+                } else return new Response(false, "Wrong answer! Please, try again.");
+            }
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No such Quiz");
+    }
+    @PostMapping("/api/quizzes")
+    public Quiz createNewQ (@RequestBody Quiz q) {
+if (ids.isEmpty()) {
+    ids.add(new Quiz(0, q.getTitle(), q.getText(), q.getOptions(), q.getAnswer()));
+    return ids.get(0);
+} else {
+    ids.add(new Quiz(ids.size() + 1, q.getTitle(), q.getText(), q.getOptions(), q.getAnswer()));
+    return ids.get(ids.size() - 1);
+}
     }
 }
