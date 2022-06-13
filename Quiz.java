@@ -3,26 +3,33 @@ package engine;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.stereotype.Component;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.util.Arrays;
+
 @Component
 public class Quiz {
     private int id;
+    @NotEmpty
    private String title;
+    @NotEmpty
    private String text;
+    @Size(min = 2)
+    @NotNull
    private String[] options;
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-   private int answer;
+   private int[] answer;
 
     public Quiz() {}
 
-    public Quiz (int id, String title, String text, String[] options, int answer) {
+    public Quiz (int id, String title, String text, String[] options, int[] answer) {
         this.id = id;
         this.title = title;
         this.text = text;
         this.options = options;
         this.answer = answer;
     }
-
-
 
     public String getTitle() {
         return title;
@@ -40,7 +47,11 @@ public class Quiz {
         return id;
     }
 
-    public int getAnswer() {
+    public int[] getAnswer() {
         return answer;
+    }
+
+    public void setAnswer(int[] answer) {
+        this.answer = answer;
     }
 }
