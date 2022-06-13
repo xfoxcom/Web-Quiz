@@ -3,6 +3,9 @@ package engine;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+
+import javax.validation.Valid;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -22,10 +25,10 @@ public class Controller {
     }
 
     @PostMapping("/api/quizzes/{id}/solve")
-    public Response postQ (@RequestParam int answer, @PathVariable int id) {
+    public Response postQ (@RequestBody Answer answer, @PathVariable int id) {
         for (Quiz quiz : ids) {
             if (quiz.getId() == id) {
-                if (quiz.getAnswer() == answer) {
+                if (Arrays.compare(quiz.getAnswer(), answer.getAnswer()) == 0 ) {
                     return new Response(true, "Congratulations, you're right!");
                 } else return new Response(false, "Wrong answer! Please, try again.");
             }
@@ -33,7 +36,10 @@ public class Controller {
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No such Quiz");
     }
     @PostMapping("/api/quizzes")
-    public Quiz createNewQ (@RequestBody Quiz q) {
+    public Quiz createNewQ (@Valid @RequestBody Quiz q) {
+        if (q.getAnswer() == null) {
+            q.setAnswer(new int[]{});
+        }
 if (ids.isEmpty()) {
     ids.add(new Quiz(0, q.getTitle(), q.getText(), q.getOptions(), q.getAnswer()));
     return ids.get(0);
