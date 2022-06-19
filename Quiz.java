@@ -3,27 +3,36 @@ package engine;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.stereotype.Component;
 
+import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.util.Arrays;
+
 
 @Component
+@Entity
+@Table(name = "quiz")
 public class Quiz {
-    private int id;
+    @Id
+    @Column
+    private long id;
     @NotEmpty
-   private String title;
+    @Column
+    private String title;
     @NotEmpty
-   private String text;
+    @Column
+    private String text;
     @Size(min = 2)
     @NotNull
-   private String[] options;
+    @Column
+    private String[] options;
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-   private int[] answer;
+    @Column
+    private int[] answer;
 
     public Quiz() {}
 
-    public Quiz (int id, String title, String text, String[] options, int[] answer) {
+    public Quiz (long id, String title, String text, String[] options, int[] answer) {
         this.id = id;
         this.title = title;
         this.text = text;
@@ -43,7 +52,7 @@ public class Quiz {
         return options;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
@@ -53,5 +62,17 @@ public class Quiz {
 
     public void setAnswer(int[] answer) {
         this.answer = answer;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setOptions(String[] options) {
+        this.options = options;
+    }
+
+    public void setText(String text) {
+        this.text = text;
     }
 }
