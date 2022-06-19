@@ -11,41 +11,63 @@ import java.util.List;
 
 @RestController
 public class Controller {
+    private QuizeRepository quizeRepository;
+    public Controller (QuizeRepository quizeRepository) {
+        this.quizeRepository = quizeRepository;
+    }
     List<Quiz> ids = new LinkedList<>();
     @GetMapping("/api/quizzes")
     public List<Quiz> getQ () {
-        return ids;
+        return (List<Quiz>) quizeRepository.findAll();
     }
     @GetMapping("/api/quizzes/{id}")
-    public Quiz getQById(@PathVariable int id) {
-        for (Quiz quiz : ids) {
-            if (quiz.getId() == id) return quiz;
+    public Quiz getQById(@PathVariable long id) {
+        if (quizeRepository.existsById(id)) {
+           return quizeRepository.findById(id).get();
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+
+       /* for (Quiz quiz : ids) {
+            if (quiz.getId() == id) return quiz;
+        }*/
     }
 
     @PostMapping("/api/quizzes/{id}/solve")
-    public Response postQ (@RequestBody Answer answer, @PathVariable int id) {
-        for (Quiz quiz : ids) {
+    public Response postQ (@RequestBody Answer answer, @PathVariable long id) {
+        if (!quizeRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No such Quiz");
+        }
+
+        if(Arrays.compare(quizeRepository.findById(id).get().getAnswer(), answer.getAnswer()) == 0) {
+            return new Response(true, "Congratulations, you're right!");
+        } else return new Response(false, "Wrong answer! Please, try again.");
+
+
+        /* for (Quiz quiz : ids) {
             if (quiz.getId() == id) {
                 if (Arrays.compare(quiz.getAnswer(), answer.getAnswer()) == 0 ) {
                     return new Response(true, "Congratulations, you're right!");
                 } else return new Response(false, "Wrong answer! Please, try again.");
             }
-        }
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No such Quiz");
+        }*/
+
     }
     @PostMapping("/api/quizzes")
     public Quiz createNewQ (@Valid @RequestBody Quiz q) {
         if (q.getAnswer() == null) {
             q.setAnswer(new int[]{});
         }
-if (ids.isEmpty()) {
-    ids.add(new Quiz(0, q.getTitle(), q.getText(), q.getOptions(), q.getAnswer()));
-    return ids.get(0);
+if (quizeRepository.count() == 0) {
+    Quiz quiz = new Quiz(0, q.getTitle(), q.getText(), q.getOptions(), q.getAnswer());
+    ids.add(quiz);
+    quizeRepository.save(quiz);
+    return quiz;
+
 } else {
-    ids.add(new Quiz(ids.size() + 1, q.getTitle(), q.getText(), q.getOptions(), q.getAnswer()));
-    return ids.get(ids.size() - 1);
+    Quiz quiz = new Quiz((int) quizeRepository.count(), q.getTitle(), q.getText(), q.getOptions(), q.getAnswer());
+    ids.add(quiz);
+    quizeRepository.save(quiz);
+    return quiz;
 }
     }
 }
