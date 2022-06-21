@@ -16,6 +16,7 @@ public class Controller {
         this.quizeRepository = quizeRepository;
     }
     List<Quiz> ids = new LinkedList<>();
+
     @GetMapping("/api/quizzes")
     public List<Quiz> getQ () {
         return (List<Quiz>) quizeRepository.findAll();
@@ -26,10 +27,6 @@ public class Controller {
            return quizeRepository.findById(id).get();
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-
-       /* for (Quiz quiz : ids) {
-            if (quiz.getId() == id) return quiz;
-        }*/
     }
 
     @PostMapping("/api/quizzes/{id}/solve")
@@ -37,20 +34,9 @@ public class Controller {
         if (!quizeRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No such Quiz");
         }
-
         if(Arrays.compare(quizeRepository.findById(id).get().getAnswer(), answer.getAnswer()) == 0) {
             return new Response(true, "Congratulations, you're right!");
         } else return new Response(false, "Wrong answer! Please, try again.");
-
-
-        /* for (Quiz quiz : ids) {
-            if (quiz.getId() == id) {
-                if (Arrays.compare(quiz.getAnswer(), answer.getAnswer()) == 0 ) {
-                    return new Response(true, "Congratulations, you're right!");
-                } else return new Response(false, "Wrong answer! Please, try again.");
-            }
-        }*/
-
     }
     @PostMapping("/api/quizzes")
     public Quiz createNewQ (@Valid @RequestBody Quiz q) {
@@ -62,7 +48,6 @@ if (quizeRepository.count() == 0) {
     ids.add(quiz);
     quizeRepository.save(quiz);
     return quiz;
-
 } else {
     Quiz quiz = new Quiz((int) quizeRepository.count(), q.getTitle(), q.getText(), q.getOptions(), q.getAnswer());
     ids.add(quiz);
