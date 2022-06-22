@@ -50,11 +50,13 @@ public class Controller {
         }
 if (quizeRepository.count() == 0) {
     Quiz quiz = new Quiz(0, q.getTitle(), q.getText(), q.getOptions(), q.getAnswer());
+    quiz.setUser(userRepository.findById(name).get());
     quizeRepository.save(quiz);
     userRepository.findById(name).get().getQuizzes().add(quiz); // TODO: 22.06.2022 added to list
     return quiz;
 } else {
     Quiz quiz = new Quiz((int) quizeRepository.count(), q.getTitle(), q.getText(), q.getOptions(), q.getAnswer());
+    quiz.setUser(userRepository.findById(name).get());
     quizeRepository.save(quiz);
     userRepository.findById(name).get().getQuizzes().add(quiz); // TODO: 22.06.2022 added to list
     return quiz;
@@ -70,13 +72,18 @@ if (quizeRepository.count() == 0) {
                 count++;
             }
         }
+
+        if (quizeRepository.findById(id).isPresent() & count == 0) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
         if (count == 0) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         } else {
             for (Quiz quiz : list) {
                 if (quiz.getId() == id) {
-                    quizeRepository.deleteById(id);
                     list.remove(quiz);
+                    quizeRepository.deleteById(id);
                     throw new ResponseStatusException(HttpStatus.NO_CONTENT);
                 }
             }
