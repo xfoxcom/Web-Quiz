@@ -1,6 +1,9 @@
 package engine;
 
+import org.springframework.boot.autoconfigure.neo4j.Neo4jProperties;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -12,10 +15,11 @@ import java.util.List;
 @RestController
 public class Controller {
     private QuizeRepository quizeRepository;
-    public Controller (QuizeRepository quizeRepository) {
+    private UserRepository userRepository;
+    public Controller (QuizeRepository quizeRepository, UserRepository userRepository) {
         this.quizeRepository = quizeRepository;
+        this.userRepository = userRepository;
     }
-    List<Quiz> ids = new LinkedList<>();
 
     @GetMapping("/api/quizzes")
     public List<Quiz> getQ () {
@@ -39,20 +43,43 @@ public class Controller {
         } else return new Response(false, "Wrong answer! Please, try again.");
     }
     @PostMapping("/api/quizzes")
-    public Quiz createNewQ (@Valid @RequestBody Quiz q) {
+    public Quiz createNewQ (@Valid @RequestBody Quiz q, Authentication auth) {
+        String name = auth.getName();
         if (q.getAnswer() == null) {
             q.setAnswer(new int[]{});
         }
 if (quizeRepository.count() == 0) {
     Quiz quiz = new Quiz(0, q.getTitle(), q.getText(), q.getOptions(), q.getAnswer());
-    ids.add(quiz);
     quizeRepository.save(quiz);
+    userRepository.findById(name).get().getQuizzes().add(quiz); // TODO: 22.06.2022 added to list
     return quiz;
 } else {
     Quiz quiz = new Quiz((int) quizeRepository.count(), q.getTitle(), q.getText(), q.getOptions(), q.getAnswer());
-    ids.add(quiz);
     quizeRepository.save(quiz);
+    userRepository.findById(name).get().getQuizzes().add(quiz); // TODO: 22.06.2022 added to list
     return quiz;
 }
+    }
+    @DeleteMapping("/api/quizzes/{id}")
+    public void deleteQ (@PathVariable long id, Authentication auth) {
+        String name = auth.getName();
+        int count = 0;
+        List<Quiz> list = userRepository.findById(name).get().getQuizzes();
+        for (Quiz quiz : list) {
+            if (quiz.getId() == id) {
+                count++;
+            }
+        }
+        if (count == 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        } else {
+            for (Quiz quiz : list) {
+                if (quiz.getId() == id) {
+                    quizeRepository.deleteById(id);
+                    list.remove(quiz);
+                    throw new ResponseStatusException(HttpStatus.NO_CONTENT);
+                }
+            }
+        }
     }
 }

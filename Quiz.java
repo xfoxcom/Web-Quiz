@@ -29,6 +29,10 @@ public class Quiz {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column
     private int[] answer;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @ManyToOne
+    @JoinColumn(name = "user_email")
+    private User user;
 
     public Quiz() {}
 
@@ -38,6 +42,14 @@ public class Quiz {
         this.text = text;
         this.options = options;
         this.answer = answer;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public String getTitle() {
