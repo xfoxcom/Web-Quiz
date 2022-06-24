@@ -1,11 +1,11 @@
 package engine;
 
+import org.springframework.stereotype.Component;
+
 import javax.persistence.*;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.Size;
 import java.util.ArrayList;
 import java.util.List;
-
+@Component
 @Entity(name = "player")
 @Table(name = "players")
 public class User {
@@ -18,7 +18,7 @@ public class User {
     private String role;
     @Column(name = "enable")
     private boolean enable = true;
-    @OneToMany(mappedBy = "user")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "user", orphanRemoval = true)
     private List<Quiz> quizzes = new ArrayList<>();
 
     public User() {}

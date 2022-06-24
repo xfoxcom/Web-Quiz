@@ -14,6 +14,7 @@ import javax.validation.constraints.Size;
 @Table(name = "quiz")
 public class Quiz {
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column
     private long id;
     @NotEmpty
@@ -36,20 +37,19 @@ public class Quiz {
 
     public Quiz() {}
 
-    public Quiz (long id, String title, String text, String[] options, int[] answer) {
-        this.id = id;
+    public Quiz (String title, String text, String[] options, int[] answer) {
         this.title = title;
         this.text = text;
         this.options = options;
         this.answer = answer;
     }
 
-    public User getUser() {
-        return user;
-    }
-
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public User getUser() {
+        return user;
     }
 
     public String getTitle() {
