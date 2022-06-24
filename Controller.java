@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -35,8 +36,8 @@ public class Controller {
     }
 
     @GetMapping("/api/quizzes")
-    public List<Quiz> getQ (@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int pageSize) {
-        return quizService.getAllQuizzes(page, pageSize);
+    public Page<Quiz> getQ (@RequestParam(defaultValue = "0") int page) {
+        return quizService.getAllQuizzes(page, 10);
     }
     @GetMapping("/api/quizzes/{id}")
     public Quiz getQById(@PathVariable long id) {
@@ -52,15 +53,12 @@ public class Controller {
         }
         Quiz quiz = quizeRepository.findById(id).get();
         if(Arrays.compare(quizeRepository.findById(id).get().getAnswer(), answer.getAnswer()) == 0) {
-
+            LocalDateTime time = LocalDateTime.now();
             SolvedQuiz solvedQuiz = new SolvedQuiz();
-            solvedQuiz.setDateTime(LocalDateTime.now());
+           // solvedQuiz.setDateTime(time);
+            solvedQuiz.setCompletedAt(time.toString());
             solvedQuiz.setEmail(auth.getName());
-            solvedQuiz.setTitle(quiz.getTitle());
-            solvedQuiz.setText(quiz.getText());
-            solvedQuiz.setOptions(quiz.getOptions());
-            solvedQuiz.setAnswer(quiz.getAnswer());
-
+            solvedQuiz.setId(quiz.getId());
             solvedQuizeRepository.save(solvedQuiz);
             return new Response(true, "Congratulations, you're right!");
         } else return new Response(false, "Wrong answer! Please, try again.");
@@ -108,10 +106,12 @@ public class Controller {
     }
     @GetMapping("/api/quizzes/completed")
     public Page<SolvedQuiz> getSolvedQ (Authentication auth, @RequestParam(defaultValue = "0") int page) { // TODO: 23.06.2022 with paging
-    String name = auth.getName();
+        String name = auth.getName();
 
-        Pageable sortedByDate = PageRequest.of(page, 10, Sort.by("datetime").descending());
+        Pageable sortedByDate = PageRequest.of(page, 10, Sort.by("completedAt").descending());
 
         return quizService.allSolvedQ(name, sortedByDate);
+
+
     }
 }

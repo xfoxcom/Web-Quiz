@@ -18,16 +18,17 @@ public class QuizService {
     @Autowired
     private solvedQuizeRepository solvedQuizeRepository;
 
-    public List<Quiz> getAllQuizzes(Integer pageNo, Integer pageSize) {
+    public Page<Quiz> getAllQuizzes(Integer pageNo, Integer pageSize) {
 
         Pageable pageble = PageRequest.of(pageNo, pageSize);
-        Page<Quiz> page = quizPaging.findAll(pageble);
+       // Page<Quiz> page =
+               return quizPaging.findAll(pageble);
 
-        if (page.hasContent()) {
+    /*    if (page.hasContent()) {
             return page.getContent();
         } else {
             return new ArrayList<Quiz>();
-        }
+        }*/
     }
 
     Page<SolvedQuiz> allSolvedQ(String email, Pageable pageable) {
