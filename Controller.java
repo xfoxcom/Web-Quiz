@@ -1,6 +1,12 @@
 package engine;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.neo4j.Neo4jProperties;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -8,13 +14,20 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
+import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
+
 
 @RestController
 public class Controller {
+    @Autowired
+    private solvedQuizeRepository solvedQuizeRepository;
+    @Autowired
+    private QuizService quizService;
+    @Autowired
     private QuizeRepository quizeRepository;
+    @Autowired
     private UserRepository userRepository;
     public Controller (QuizeRepository quizeRepository, UserRepository userRepository) {
         this.quizeRepository = quizeRepository;
@@ -22,8 +35,8 @@ public class Controller {
     }
 
     @GetMapping("/api/quizzes")
-    public List<Quiz> getQ () {
-        return (List<Quiz>) quizeRepository.findAll();
+    public List<Quiz> getQ (@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int pageSize) {
+        return quizService.getAllQuizzes(page, pageSize);
     }
     @GetMapping("/api/quizzes/{id}")
     public Quiz getQById(@PathVariable long id) {
@@ -32,13 +45,23 @@ public class Controller {
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
-
     @PostMapping("/api/quizzes/{id}/solve")
-    public Response postQ (@RequestBody Answer answer, @PathVariable long id) {
+    public Response postQ (@RequestBody Answer answer, @PathVariable long id, Authentication auth) {
         if (!quizeRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No such Quiz");
         }
+        Quiz quiz = quizeRepository.findById(id).get();
         if(Arrays.compare(quizeRepository.findById(id).get().getAnswer(), answer.getAnswer()) == 0) {
+
+            SolvedQuiz solvedQuiz = new SolvedQuiz();
+            solvedQuiz.setDateTime(LocalDateTime.now());
+            solvedQuiz.setEmail(auth.getName());
+            solvedQuiz.setTitle(quiz.getTitle());
+            solvedQuiz.setText(quiz.getText());
+            solvedQuiz.setOptions(quiz.getOptions());
+            solvedQuiz.setAnswer(quiz.getAnswer());
+
+            solvedQuizeRepository.save(solvedQuiz);
             return new Response(true, "Congratulations, you're right!");
         } else return new Response(false, "Wrong answer! Please, try again.");
     }
@@ -48,19 +71,13 @@ public class Controller {
         if (q.getAnswer() == null) {
             q.setAnswer(new int[]{});
         }
-if (quizeRepository.count() == 0) {
-    Quiz quiz = new Quiz(0, q.getTitle(), q.getText(), q.getOptions(), q.getAnswer());
+
+    Quiz quiz = new Quiz( q.getTitle(), q.getText(), q.getOptions(), q.getAnswer());
     quiz.setUser(userRepository.findById(name).get());
     quizeRepository.save(quiz);
-    userRepository.findById(name).get().getQuizzes().add(quiz); // TODO: 22.06.2022 added to list
+    userRepository.findById(name).get().getQuizzes().add(quiz);
     return quiz;
-} else {
-    Quiz quiz = new Quiz((int) quizeRepository.count(), q.getTitle(), q.getText(), q.getOptions(), q.getAnswer());
-    quiz.setUser(userRepository.findById(name).get());
-    quizeRepository.save(quiz);
-    userRepository.findById(name).get().getQuizzes().add(quiz); // TODO: 22.06.2022 added to list
-    return quiz;
-}
+
     }
     @DeleteMapping("/api/quizzes/{id}")
     public void deleteQ (@PathVariable long id, Authentication auth) {
@@ -88,5 +105,13 @@ if (quizeRepository.count() == 0) {
                 }
             }
         }
+    }
+    @GetMapping("/api/quizzes/completed")
+    public Page<SolvedQuiz> getSolvedQ (Authentication auth, @RequestParam(defaultValue = "0") int page) { // TODO: 23.06.2022 with paging
+    String name = auth.getName();
+
+        Pageable sortedByDate = PageRequest.of(page, 10, Sort.by("datetime").descending());
+
+        return quizService.allSolvedQ(name, sortedByDate);
     }
 }
