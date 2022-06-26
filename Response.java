@@ -1,18 +1,12 @@
-package engine;
+package recipes;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Response {
-    private boolean success;
-    private String feedback;
-    public Response (boolean success, String feedback) {
-        this.success = success;
-        this.feedback = feedback;
-    }
-
-    public String getFeedback() {
-        return feedback;
-    }
-
-    public boolean isSuccess() {
-        return success;
-    }
+    private int id;
 }
